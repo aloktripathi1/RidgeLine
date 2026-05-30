@@ -58,6 +58,7 @@ class Settings:
 
     email_from_address: str = _env("TMA_EMAIL_FROM", "noreply@ridgeline.app")
     email_mode: str = _env("TMA_EMAIL_MODE", "console")  # console | smtp (stub)
+    debug: bool = _env_bool("TMA_DEBUG", False)
 
 
 settings = Settings()
