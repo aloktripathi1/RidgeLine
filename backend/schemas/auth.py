@@ -25,4 +25,5 @@ class UserPublic(BaseModel):
 
 class AuthResponse(BaseModel):
     token: str
+    token_type: str = "bearer"
     user: UserPublic
