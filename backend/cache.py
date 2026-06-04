@@ -11,6 +11,10 @@ from .settings import settings
 
 logger = logging.getLogger(__name__)
 
+TREK_LIST_TTL: int = 600
+TREK_DETAIL_TTL: int = 300
+USER_LIST_TTL: int = 300
+
 _redis_client: redis.Redis | None = None
 
 
