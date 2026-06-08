@@ -9,6 +9,9 @@ from sqlalchemy.orm import Session
 from ..models.trek import Trek, TrekDifficulty, TrekStatus
 from ..models.user import User
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def _parse_difficulty(value: str) -> TrekDifficulty:
     try:
