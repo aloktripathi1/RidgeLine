@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from fastapi import HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 
 from .database import init_database
@@ -57,6 +58,14 @@ def create_app() -> FastAPI:
     api.include_router(booking_router)
     api.include_router(metrics_router)
     app.mount(settings.api_prefix, api)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     app.mount(
         "/static",
