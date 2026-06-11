@@ -75,6 +75,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def _startup() -> None:
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
         init_database()
         logger.info("Database ready at %s", settings.sqlite_path)
         logger.info("Seed admin: %s / %s", settings.seed_admin_email, settings.seed_admin_password)
