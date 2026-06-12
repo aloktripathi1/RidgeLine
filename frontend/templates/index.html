@@ -80,6 +80,12 @@
     @media (min-width: 992px) {
       .py-lg-6 { padding-top: 7rem; padding-bottom: 7rem; }
     }
+
+    @keyframes ridgeFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #app > div { animation: ridgeFadeIn .4s ease both; }
   </style>
 </head>
 
