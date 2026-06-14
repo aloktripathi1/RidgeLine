@@ -53,6 +53,10 @@ window.TrekCard = {
     stCls()   { return util.statusClass(this.trek.status); },
   },
   methods: {
+    formattedPrice() {
+      if (!this.trek.price) return 'Contact us';
+      return '₹' + this.trek.price.toLocaleString('en-IN');
+    },
     inr: util.inr,
     fmtDate: util.fmtDate,
     trunc(s) { return s.length > 120 ? s.slice(0, 118) + "…" : s; },
