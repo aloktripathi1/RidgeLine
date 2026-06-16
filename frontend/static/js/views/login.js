@@ -71,7 +71,7 @@ window.LoginView = {
     </div>
   `,
   methods: {
-    prefill(email, password) { this.email = email; this.password = password; },
+    prefill(email, password) { this.email = email.trim(); this.password = password; },
     async onSubmit(e) {
       this.submitted = true;
       this.error = "";
