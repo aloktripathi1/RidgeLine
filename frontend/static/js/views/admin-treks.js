@@ -8,6 +8,7 @@ window.AdminTreksView = {
       mode: "create", // create | edit
       submitted: false, saving: false,
       pendingDelete: null,
+      deleteLoading: false,
       _modal: null, _confirm: null,
     };
   },
