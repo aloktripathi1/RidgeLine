@@ -5,7 +5,8 @@
 window.StaffTrekView = {
   props: ["id"],
   data() {
-    return { trek: null, participants: [], loading: true, saving: false };
+    return { trek: null, participants: [], loading: true, saving: false,
+      saveError: "" };
   },
   template: /*html*/`
     <div class="container-xxl py-4 py-lg-5">
