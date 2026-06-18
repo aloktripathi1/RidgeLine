@@ -19,13 +19,13 @@ sudo apt install -y python3-pip python3-venv redis-server
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r ridgeline/backend/requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 ### 3) Start API
 
 ```bash
-uvicorn ridgeline.backend.main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8000
 ```
 
 Open:
@@ -36,8 +36,8 @@ Open:
 ### 4) Start Celery (worker + beat)
 
 ```bash
-celery -A ridgeline.celery_worker.celery_app worker -l info
-celery -A ridgeline.celery_worker.celery_app beat -l info
+celery -A celery_worker.celery_app worker -l info
+celery -A celery_worker.celery_app beat -l info
 ```
 
 ## Seeded Admin
