@@ -65,3 +65,10 @@ class Settings:
 
 
 settings = Settings()
+
+import logging as _logging
+if settings.jwt_secret_key == "dev-only-change-me":
+    _logging.getLogger(__name__).warning(
+        "TMA_JWT_SECRET_KEY is using the default dev value — JWTs are not secure. "
+        "Set a random secret before deploying."
+    )
