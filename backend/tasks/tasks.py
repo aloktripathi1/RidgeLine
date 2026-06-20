@@ -155,10 +155,13 @@ def export_booking_history_csv(user_id: int) -> dict:
         exports_dir = _exports_dir()
         filename = f"bookings_user_{user_id}.csv"
         path = exports_dir / filename
+        tmp_path = path.with_suffix(".tmp")
 
-        with path.open("w", newline="", encoding="utf-8") as f:
+        # Write to a temp file first, then atomically rename so concurrent
+        # retries on multiple workers never observe a half-written file.
+        with tmp_path.open("w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
-            writer.writerow(["booking_id", "trek_id", "trek_name", "booking_date", "status"]) 
+            writer.writerow(["booking_id", "trek_id", "trek_name", "booking_date", "status"])
             for booking in bookings:
                 trek = booking.trek
                 writer.writerow(
@@ -170,6 +173,7 @@ def export_booking_history_csv(user_id: int) -> dict:
                         booking.status.value,
                     ]
                 )
+        os.replace(tmp_path, path)
 
         html = (
             f"<p>Your booking history export is ready.</p>"
