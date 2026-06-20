@@ -27,6 +27,10 @@ class User(Base):
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     blacklisted: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    phone: Mapped[str] = mapped_column(String(30), nullable=False, default="")
+    bio: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    avatar_url: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 

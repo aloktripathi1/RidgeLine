@@ -1,14 +1,30 @@
-/* API wrapper. Routes through MockAPI for the demo.
-   To wire to a real FastAPI backend later, replace `MockAPI.call(...)` with axios calls
-   against window.API_BASE.
+/* API wrapper — calls the real FastAPI backend via axios.
+   All responses are unwrapped from the {success, data, message} envelope.
+   Errors throw as { response: { data: { detail } } } to match the error
+   handling pattern already used across views.
 */
 (function (global) {
+  const BASE = window.__API_BASE__ || "/api";
+
   async function call(method, url, body) {
-    try {
-      return await MockAPI.call(method, url, body);
-    } catch (e) {
-      throw e;
+    const headers = { "Content-Type": "application/json" };
+    if (store.state.token) {
+      headers["Authorization"] = "Bearer " + store.state.token;
     }
+
+    const config = { method, url: BASE + url, headers };
+    if (body !== undefined && body !== null) {
+      if (method === "GET" || method === "DELETE") {
+        config.params = body;
+      } else {
+        config.data = body;
+      }
+    }
+
+    const res = await axios(config);
+    // Unwrap FastAPI success envelope
+    if (res.data && res.data.data !== undefined) return res.data.data;
+    return res.data;
   }
 
   global.api = {
@@ -28,15 +44,22 @@
     getUser:     (id) => call("GET", "/users/" + id),
     createStaff: (body) => call("POST", "/users/staff", body),
     updateUser:  (id, body) => call("PATCH", "/users/" + id, body),
+    updateMyProfile: (body) => call("PATCH", "/users/me", body),
 
-    // bookings
-    myBookings:    (userId) => call("GET", "/bookings/me", { userId }),
+    // bookings — user identity comes from the JWT, no userId parameter needed
+    myBookings:    () => call("GET", "/bookings/me"),
     trekBookings:  (trekId) => call("GET", "/bookings/trek/" + trekId),
-    book:          (user_id, trek_id) => call("POST", "/bookings", { user_id, trek_id }),
+    book:          (_user_id, trek_id) => call("POST", "/bookings", { trek_id }),
     updateBooking: (id, body) => call("PATCH", "/bookings/" + id, body),
-    exportBookings:(userId) => call("POST", "/bookings/export", { userId }),
+    exportBookings: () => call("POST", "/bookings/export", {}),
 
     // metrics
-    adminMetrics:  () => call("GET", "/metrics/admin"),
+    adminMetrics: () => call("GET", "/metrics/admin"),
+
+    // AI
+    aiRecommend: (prefs) => call("POST", "/ai/recommend", prefs),
+    aiItinerary: (trekId, opts) => call("POST", "/ai/itinerary/" + trekId, opts || {}),
+    aiDescribe:  (body) => call("POST", "/ai/describe", body),
+    aiChat:      (messages, trekId) => call("POST", "/ai/chat", { messages, trek_id: trekId || null }),
   };
 })(window);

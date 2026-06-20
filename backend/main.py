@@ -19,6 +19,7 @@ from .routes.trek_routes import router as trek_router
 from .routes.user_routes import router as user_router
 from .routes.booking_routes import router as booking_router
 from .routes.metrics_routes import router as metrics_router
+from .routes.ai_routes import router as ai_router
 
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     api.include_router(user_router)
     api.include_router(booking_router)
     api.include_router(metrics_router)
+    api.include_router(ai_router)
     app.mount(settings.api_prefix, api)
 
     app.add_middleware(

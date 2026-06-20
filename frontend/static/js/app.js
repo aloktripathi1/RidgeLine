@@ -69,7 +69,7 @@
 
   // --- Root App component ---
   const App = {
-    components: { Navbar: window.Navbar, ToastPortal },
+    components: { Navbar: window.Navbar, ToastPortal, AiChat: window.AiChat },
     template: /*html*/`
       <div class="min-vh-100 d-flex flex-column">
         <navbar />
@@ -77,6 +77,7 @@
           <router-view />
         </main>
         <toast-portal />
+        <ai-chat />
       </div>
     `
   };

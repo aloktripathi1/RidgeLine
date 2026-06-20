@@ -10,6 +10,8 @@ window.AdminTreksView = {
       pendingDelete: null,
       deleteLoading: false,
       _modal: null, _confirm: null,
+      // AI description enhancer
+      aiDescLoading: false,
     };
   },
   template: /*html*/`
@@ -135,7 +137,17 @@ window.AdminTreksView = {
                   </div>
 
                   <div class="col-12">
-                    <label class="form-label small fw-semibold text-uppercase">Description</label>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <label class="form-label small fw-semibold text-uppercase mb-0">Description</label>
+                      <button type="button" class="btn btn-sm btn-outline-ridge py-0 px-2"
+                              style="font-size:0.72rem;"
+                              :disabled="aiDescLoading || !form.name || !form.location"
+                              @click="aiEnhanceDesc">
+                        <span v-if="aiDescLoading" class="spinner-border spinner-border-sm me-1" style="width:.65rem;height:.65rem;"></span>
+                        <i v-else class="bi bi-stars me-1"></i>
+                        {{ aiDescLoading ? 'Generating…' : 'AI Enhance' }}
+                      </button>
+                    </div>
                     <textarea v-model="form.description" class="form-control" rows="3" required minlength="20"></textarea>
                     <div class="invalid-feedback">A short description helps trekkers decide (min 20 chars).</div>
                   </div>
@@ -222,6 +234,26 @@ window.AdminTreksView = {
       } catch (e) {
         store.toast({ title: "Could not delete", body: e?.response?.data?.detail || "Try again.", variant: "danger" });
       } finally { this.pendingDelete = null; }
+    },
+    async aiEnhanceDesc() {
+      if (!this.form.name || !this.form.location) return;
+      this.aiDescLoading = true;
+      try {
+        const res = await api.aiDescribe({
+          name: this.form.name,
+          location: this.form.location,
+          difficulty: this.form.difficulty || "Moderate",
+          duration_days: this.form.duration_days || 5,
+          price: this.form.price || 0,
+          highlights: "",
+        });
+        this.form.description = res.description;
+        store.toast({ title: "Description generated", body: "Review and edit as needed.", variant: "success" });
+      } catch (e) {
+        store.toast({ title: "AI unavailable", body: e?.response?.data?.detail || "Check ANTHROPIC_API_KEY is set.", variant: "danger" });
+      } finally {
+        this.aiDescLoading = false;
+      }
     },
     async save(e) {
       this.submitted = true;

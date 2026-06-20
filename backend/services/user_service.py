@@ -75,7 +75,7 @@ def search_users(db: Session, query: str) -> list[User]:
 
 
 def update_user_admin(db: Session, user: User, updates: dict) -> User:
-    allowed_fields = {"name", "email", "active", "blacklisted"}
+    allowed_fields = {"name", "email", "active", "blacklisted", "phone", "bio", "avatar_url"}
     for field_name, field_value in updates.items():
         if field_name not in allowed_fields:
             continue

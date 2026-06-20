@@ -14,3 +14,13 @@ class UserUpdateRequest(BaseModel):
     email: EmailStr | None = None
     active: bool | None = None
     blacklisted: bool | None = None
+    phone: str | None = Field(default=None, max_length=30)
+    bio: str | None = Field(default=None, max_length=500)
+    avatar_url: str | None = Field(default=None, max_length=500)
+
+
+class MyProfileUpdateRequest(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=120)
+    phone: str | None = Field(default=None, max_length=30)
+    bio: str | None = Field(default=None, max_length=500)
+    avatar_url: str | None = Field(default=None, max_length=500)

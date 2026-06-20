@@ -15,6 +15,12 @@ window.CatalogView = {
       selected: null,
       modalInst: null,
       checkoutTrek: null,
+      // AI Trek Finder
+      aiOpen: false,
+      aiForm: { experience: "beginner", duration_pref: "any", goal: "scenic", notes: "" },
+      aiLoading: false,
+      aiResults: null,
+      aiError: "",
     };
   },
   template: /*html*/`
@@ -112,6 +118,87 @@ window.CatalogView = {
           <!-- Filter sidebar -->
           <aside class="col-lg-3">
             <div class="filter-sticky">
+
+              <!-- AI Trek Finder card -->
+              <div class="card border-0 shadow-sm mb-3" style="background:linear-gradient(135deg,#f0f4f0,#e6ece6);">
+                <div class="card-body p-3">
+                  <button class="btn btn-sm w-100 text-start p-0 border-0 bg-transparent d-flex align-items-center gap-2"
+                          @click="aiOpen = !aiOpen; aiResults = null; aiError = ''">
+                    <span class="badge bg-ridge">AI</span>
+                    <span class="fw-semibold text-ridge small">Trek Finder</span>
+                    <i class="bi ms-auto small" :class="aiOpen ? 'bi-chevron-up' : 'bi-chevron-down'" style="color:var(--ridge)"></i>
+                  </button>
+                  <p v-if="!aiOpen" class="text-muted small mb-0 mt-1" style="font-size:0.75rem;">
+                    Let AI pick the perfect trek for you.
+                  </p>
+
+                  <div v-if="aiOpen" class="mt-3">
+                    <div class="mb-2">
+                      <label class="form-label small fw-semibold text-uppercase mb-1">Your experience</label>
+                      <select v-model="aiForm.experience" class="form-select form-select-sm">
+                        <option value="beginner">First-timer / Beginner</option>
+                        <option value="intermediate">Occasional trekker</option>
+                        <option value="expert">Experienced / Fit</option>
+                      </select>
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label small fw-semibold text-uppercase mb-1">Trip length</label>
+                      <select v-model="aiForm.duration_pref" class="form-select form-select-sm">
+                        <option value="any">No preference</option>
+                        <option value="short">Short (3–5 days)</option>
+                        <option value="medium">Medium (6–8 days)</option>
+                        <option value="long">Long (9+ days)</option>
+                      </select>
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label small fw-semibold text-uppercase mb-1">I want…</label>
+                      <select v-model="aiForm.goal" class="form-select form-select-sm">
+                        <option value="scenic">Panoramic views</option>
+                        <option value="snow">Snow & high altitude</option>
+                        <option value="adventure">Challenge & adventure</option>
+                        <option value="easy">Easy & relaxing</option>
+                        <option value="cultural">Villages & culture</option>
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label small fw-semibold text-uppercase mb-1">Anything else?</label>
+                      <input v-model="aiForm.notes" type="text" class="form-control form-control-sm" placeholder="e.g. no snow, family trip…" />
+                    </div>
+
+                    <button class="btn btn-ridge btn-sm w-100" @click="runAI" :disabled="aiLoading">
+                      <span v-if="aiLoading" class="spinner-border spinner-border-sm me-1"></span>
+                      <i v-else class="bi bi-stars me-1"></i>
+                      {{ aiLoading ? 'Finding…' : 'Find my trek' }}
+                    </button>
+
+                    <div v-if="aiError" class="alert alert-danger py-2 small mt-2 mb-0">{{ aiError }}</div>
+
+                    <div v-if="aiResults" class="mt-3">
+                      <div class="small text-muted mb-2 fst-italic">{{ aiResults.summary }}</div>
+                      <div v-for="rec in aiResults.recommendations" :key="rec.trek_name"
+                           class="card border-0 mb-2 cursor-pointer"
+                           style="background:#fff; cursor:pointer;"
+                           @click="openTrekByName(rec.trek_name)">
+                        <div class="card-body p-2">
+                          <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="fw-semibold small text-ridge">{{ rec.trek_name }}</span>
+                            <span class="badge rounded-pill"
+                                  :class="rec.match === 'Excellent' ? 'bg-success' : rec.match === 'Good' ? 'bg-ridge' : 'text-bg-secondary'">
+                              {{ rec.match }}
+                            </span>
+                          </div>
+                          <p class="small text-muted mb-0" style="font-size:0.72rem; line-height:1.4;">{{ rec.reason }}</p>
+                        </div>
+                      </div>
+                      <button class="btn btn-sm btn-link text-muted p-0 small" @click="aiResults = null; aiOpen = false">
+                        Clear results
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- end AI Trek Finder -->
+
               <div class="card border-0 shadow-sm">
                 <div class="card-body">
                   <div class="d-flex justify-content-between align-items-center mb-3">
@@ -264,7 +351,23 @@ window.CatalogView = {
         // small delay so the trek modal finishes hiding before checkout opens
         setTimeout(() => bootstrap.Modal.getOrCreateInstance(el).show(), 250);
       });
-    }
+    },
+    openTrekByName(name) {
+      const t = this.treks.find(x => x.name === name);
+      if (t) this.openTrek(t);
+    },
+    async runAI() {
+      this.aiLoading = true;
+      this.aiError = "";
+      this.aiResults = null;
+      try {
+        this.aiResults = await api.aiRecommend({ ...this.aiForm });
+      } catch (e) {
+        this.aiError = e?.response?.data?.detail || "AI service unavailable. Please try again.";
+      } finally {
+        this.aiLoading = false;
+      }
+    },
   },
   created() {
     this.onSearch = util.debounce(() => { this.qDebounced = this.query; }, 350);

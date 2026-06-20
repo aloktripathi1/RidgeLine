@@ -99,6 +99,9 @@ def init_database() -> None:
             role=UserRole.staff,
             active=True,
             blacklisted=False,
+            phone="+91 99300 44556",
+            bio="Trek leader · wilderness first responder. Specialises in Uttarakhand winter routes.",
+            avatar_url="https://i.pravatar.cc/200?img=15",
             created_at=now,
             updated_at=now,
         )
@@ -109,6 +112,9 @@ def init_database() -> None:
             role=UserRole.staff,
             active=True,
             blacklisted=False,
+            phone="+91 97400 66778",
+            bio="Sikkim & Ladakh specialist. High-altitude expedition lead since 2019.",
+            avatar_url="https://i.pravatar.cc/200?img=45",
             created_at=now,
             updated_at=now,
         )
@@ -119,6 +125,9 @@ def init_database() -> None:
             role=UserRole.trekker,
             active=True,
             blacklisted=False,
+            phone="+91 90000 12345",
+            bio="Weekend wanderer chasing ridgelines.",
+            avatar_url="https://i.pravatar.cc/200?img=47",
             created_at=now,
             updated_at=now,
         )
@@ -129,6 +138,9 @@ def init_database() -> None:
             role=UserRole.trekker,
             active=True,
             blacklisted=False,
+            phone="+91 90000 54321",
+            bio="Software by day, summits by season.",
+            avatar_url="https://i.pravatar.cc/200?img=12",
             created_at=now,
             updated_at=now,
         )

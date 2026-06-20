@@ -309,7 +309,7 @@ window.ProfileView = {
           bio: this.profile.bio || "", avatar: this.profile.avatar || "",
         };
         if (this.profile.role === "trekker") {
-          this.bookings = await api.myBookings(me.id);
+          this.bookings = await api.myBookings();
         } else if (this.profile.role === "staff") {
           const all = await api.listTreks();
           this.assignedTreks = all.filter(t => t.staff_id === me.id);
@@ -324,7 +324,12 @@ window.ProfileView = {
       if (!this.form.name || this.form.name.length < 2) return;
       this.saving = true;
       try {
-        const updated = await api.updateUser(this.profile.id, { ...this.form });
+        const updated = await api.updateMyProfile({
+          name: this.form.name,
+          phone: this.form.phone || "",
+          bio: this.form.bio || "",
+          avatar_url: this.form.avatar || "",
+        });
         this.profile = updated;
         store.setUser({ name: updated.name });
         store.toast({ title: "Profile updated", body: "Your changes are saved.", variant: "success" });
