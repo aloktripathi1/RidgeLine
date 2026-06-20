@@ -9,6 +9,8 @@ window.MyBookingsView = {
       planResult: null,
       planError: "",
       planModalInst: null,
+      planCached: false,
+      planCachedAt: null,
     };
   },
   template: /*html*/`
@@ -182,6 +184,18 @@ window.MyBookingsView = {
                   </li>
                 </ul>
 
+                <div class="d-flex align-items-center justify-content-between mt-4 pt-3 border-top">
+                  <span v-if="planCached" class="small text-muted">
+                    <i class="bi bi-lightning-charge-fill text-success me-1"></i>
+                    Loaded from cache · {{ planCachedAt }}
+                  </span>
+                  <span v-else class="small text-muted">
+                    <i class="bi bi-stars text-ridge me-1"></i>Just generated
+                  </span>
+                  <button class="btn btn-sm btn-outline-secondary" @click="generatePlan(true)" :disabled="planLoading">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Regenerate
+                  </button>
+                </div>
               </div>
               <!-- Idle (should not show — auto-generates on open) -->
               <div v-else class="text-center py-5">
@@ -244,13 +258,33 @@ window.MyBookingsView = {
         this.planModalInst.show();
       });
     },
-    async generatePlan() {
+    async generatePlan(forceRefresh = false) {
       if (!this.planTrek) return;
+      const trekId = this.planTrek.trek_id || this.planTrek.trek.id;
+      const cacheKey = "tma:itinerary:" + trekId;
+
+      if (!forceRefresh) {
+        try {
+          const raw = localStorage.getItem(cacheKey);
+          if (raw) {
+            const cached = JSON.parse(raw);
+            this.planResult = cached.data;
+            this.planCached = true;
+            this.planCachedAt = new Date(cached.savedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+            return;
+          }
+        } catch (_) { /* corrupt entry — fall through to generate */ }
+      }
+
       this.planLoading = true;
       this.planError = "";
       this.planResult = null;
+      this.planCached = false;
+      this.planCachedAt = null;
       try {
-        this.planResult = await api.aiItinerary(this.planTrek.trek_id || this.planTrek.trek.id, {});
+        const result = await api.aiItinerary(trekId, {});
+        this.planResult = result;
+        localStorage.setItem(cacheKey, JSON.stringify({ data: result, savedAt: new Date().toISOString() }));
       } catch (e) {
         this.planError = e?.response?.data?.detail || "AI service unavailable. Please try again.";
       } finally {
