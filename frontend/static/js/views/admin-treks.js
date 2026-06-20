@@ -214,11 +214,11 @@ window.AdminTreksView = {
       } finally { this.loading = false; }
     },
     openCreate() {
-      this.mode = "create"; this.form = this.blank(); this.submitted = false;
+      this.mode = "create"; this.form = this.blank(); this.submitted = false; this.aiDescLoading = false;
       bootstrap.Modal.getOrCreateInstance(this.$refs.formModal).show();
     },
     openEdit(t) {
-      this.mode = "edit"; this.form = { ...t }; this.submitted = false;
+      this.mode = "edit"; this.form = { ...t }; this.submitted = false; this.aiDescLoading = false;
       bootstrap.Modal.getOrCreateInstance(this.$refs.formModal).show();
     },
     askDelete(t) {
