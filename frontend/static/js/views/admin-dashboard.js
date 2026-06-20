@@ -1,7 +1,7 @@
 /* Admin dashboard — metrics cards + 2 Chart.js charts. */
 window.AdminDashboardView = {
   data() {
-    return { metrics: null, loading: true, _charts: [] };
+    return { metrics: null, loading: true, avgLoad: 0, _charts: [] };
   },
   template: /*html*/`
     <div class="container-xxl py-4 py-lg-5">
@@ -132,13 +132,6 @@ window.AdminDashboardView = {
       </div>
     </div>
   `,
-  computed: {
-    avgLoad() {
-      if (!this.metrics) return 0;
-      // computed on-the-fly from trek list - re-fetch lightly
-      return this._avg || 0;
-    }
-  },
   methods: {
     async reload() {
       this.loading = true;
@@ -147,7 +140,7 @@ window.AdminDashboardView = {
         this.metrics = m;
         const total = treks.reduce((s, t) => s + t.max_slots, 0);
         const taken = treks.reduce((s, t) => s + (t.max_slots - t.available_slots), 0);
-        this._avg = total ? Math.round((taken / total) * 100) : 0;
+        this.avgLoad = total ? Math.round((taken / total) * 100) : 0;
       } finally { this.loading = false; }
       this.$nextTick(this.renderCharts);
     },

@@ -8,7 +8,7 @@ window.AdminUsersView = {
     return {
       users: [], treks: [], loading: true,
       tab: "trekkers", // trekkers | staff
-      staffForm: { name: "", email: "", password: "staff123" },
+      staffForm: { name: "", email: "", password: "" },
       submitted: false, creating: false,
     };
   },
@@ -53,6 +53,12 @@ window.AdminUsersView = {
               </tr>
             </thead>
             <tbody>
+              <tr v-if="!trekkers.length">
+                <td colspan="4" class="text-center text-muted py-5">
+                  <i class="bi bi-compass d-block mb-2 opacity-25" style="font-size:2rem;"></i>
+                  No trekkers registered yet.
+                </td>
+              </tr>
               <tr v-for="u in trekkers" :key="u.id">
                 <td class="ps-4">
                   <div class="d-flex align-items-center gap-2">
@@ -103,6 +109,12 @@ window.AdminUsersView = {
                   </tr>
                 </thead>
                 <tbody>
+                  <tr v-if="!staff.length">
+                    <td colspan="3" class="text-center text-muted py-5">
+                      <i class="bi bi-person-badge d-block mb-2 opacity-25" style="font-size:2rem;"></i>
+                      No staff members yet.
+                    </td>
+                  </tr>
                   <tr v-for="s in staff" :key="s.id">
                     <td class="ps-4">
                       <div class="fw-semibold">{{ s.name }}</div>
@@ -117,8 +129,10 @@ window.AdminUsersView = {
                       </div>
                     </td>
                     <td class="text-end pe-4">
-                      <button class="btn btn-sm btn-outline-secondary" @click="setActive(s, !s.active)">
-                        {{ s.active ? 'Active' : 'Inactive' }}
+                      <button class="btn btn-sm"
+                              :class="s.active ? 'btn-outline-danger' : 'btn-outline-success'"
+                              @click="setActive(s, !s.active)">
+                        {{ s.active ? 'Disable' : 'Enable' }}
                       </button>
                     </td>
                   </tr>
@@ -150,8 +164,8 @@ window.AdminUsersView = {
                 </div>
                 <div class="mb-3">
                   <label class="form-label small fw-semibold text-uppercase">Temporary password</label>
-                  <input v-model="staffForm.password" type="text" class="form-control" required minlength="6" />
-                  <div class="form-text">They'll be asked to reset on first login.</div>
+                  <input v-model="staffForm.password" type="password" class="form-control" required minlength="6" />
+                  <div class="form-text">Share this password with them directly.</div>
                 </div>
                 <button class="btn btn-ridge w-100" :disabled="creating">
                   <span v-if="creating" class="spinner-border spinner-border-sm me-2"></span>
@@ -203,7 +217,7 @@ window.AdminUsersView = {
       try {
         await api.createStaff({ ...this.staffForm });
         store.toast({ title: "Staff added", body: this.staffForm.name, variant: "success" });
-        this.staffForm = { name: "", email: "", password: "staff123" };
+        this.staffForm = { name: "", email: "", password: "" };
         this.submitted = false;
         await this.reload();
       } catch (e) {

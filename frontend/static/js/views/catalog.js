@@ -71,8 +71,8 @@ window.CatalogView = {
                 </div>
                 <div class="vr opacity-50"></div>
                 <div class="text-lg-end">
-                  <div class="stat-num text-white">4</div>
-                  <div class="small opacity-75 text-uppercase">States</div>
+                  <div class="stat-num text-white">{{ locations.length }}</div>
+                  <div class="small opacity-75 text-uppercase">Regions</div>
                 </div>
               </div>
             </div>

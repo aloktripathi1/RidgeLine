@@ -10,7 +10,7 @@ window.LoginView = {
     };
   },
   template: /*html*/`
-    <div class="container-xxl py-5">
+    <div class="container-xxl py-4 py-lg-5">
       <div class="row justify-content-center">
         <div class="col-md-7 col-lg-5">
           <div class="text-center mb-4">
@@ -28,7 +28,7 @@ window.LoginView = {
                 <div class="mb-3">
                   <label class="form-label small fw-semibold text-uppercase d-flex justify-content-between">
                     <span>Password</span>
-                    <a href="#" class="text-decoration-none text-muted small" @click.prevent>Forgot?</a>
+                    <span class="text-muted small opacity-50" style="cursor:default;">Forgot?</span>
                   </label>
                   <input v-model="password" type="password" class="form-control form-control-lg" required minlength="6" autocomplete="current-password" />
                   <div class="invalid-feedback">Password is required.</div>

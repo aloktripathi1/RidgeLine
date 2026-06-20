@@ -338,7 +338,7 @@ window.ProfileView = {
       } finally { this.saving = false; }
     },
     downloadCert(b) {
-      store.toast({ title: "Certificate ready", body: b.trek.name + " — generating your PDF…", variant: "success" });
+      store.toast({ title: "Coming soon", body: "PDF certificates for " + b.trek.name + " will be available in a future update.", variant: "secondary" });
     }
   },
   created() { this.reload(); }

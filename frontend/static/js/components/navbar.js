@@ -48,7 +48,7 @@ window.Navbar = {
               <button class="btn btn-sm btn-outline-secondary position-relative"
                       style="width:36px;height:36px;padding:0;border-radius:50%;"
                       @click="toggleNotif"
-                      title="Notifications">
+                      aria-label="Notifications">
                 <i class="bi bi-bell-fill" style="font-size:.85rem;"></i>
                 <span v-if="unread > 0"
                       class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
@@ -73,7 +73,7 @@ window.Navbar = {
 
                 <div class="overflow-auto" style="max-height:340px;">
                   <div v-if="notifLoading" class="text-center py-4">
-                    <div class="spinner-border spinner-border-sm text-muted"></div>
+                    <div class="spinner-border spinner-border-sm text-ridge"></div>
                   </div>
                   <div v-else-if="!notifs.length" class="text-center py-5 text-muted small">
                     <i class="bi bi-bell-slash display-6 d-block mb-2 opacity-25"></i>

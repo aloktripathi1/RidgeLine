@@ -5,7 +5,7 @@ window.MyBookingsView = {
       bookings: [], loading: true, exporting: false, cancelling: null,
       // Reviews
       reviewedBookingIds: [],
-      reviewTarget: null, reviewRating: 5, reviewBody: "", reviewSaving: false, reviewModalInst: null,
+      reviewTarget: null, reviewRating: 5, hoverRating: 0, reviewBody: "", reviewSaving: false, reviewModalInst: null,
       // Waitlist
       waitlist: [],
       waitlistLeaving: null,
@@ -176,7 +176,7 @@ window.MyBookingsView = {
       <!-- Review modal -->
       <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content border-0 shadow">
+          <div class="modal-content border-0 shadow-lg">
             <div class="modal-header border-0">
               <h5 class="modal-title display-serif">Rate your trek</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -184,12 +184,12 @@ window.MyBookingsView = {
             <div class="modal-body pt-0" v-if="reviewTarget">
               <p class="text-muted small mb-3">{{ reviewTarget.trek.name }} · {{ reviewTarget.trek.location }}</p>
               <!-- Star picker -->
-              <div class="d-flex gap-1 mb-3" style="font-size:2rem;">
+              <div class="d-flex gap-1 mb-3" style="font-size:2rem;" @mouseleave="hoverRating=0">
                 <span v-for="s in [1,2,3,4,5]" :key="s"
-                      style="cursor:pointer;transition:transform .1s;"
-                      :style="s<=reviewRating?'color:#f59e0b;':'color:#ddd;'"
+                      style="cursor:pointer;transition:color .1s;"
+                      :style="s<=(hoverRating||reviewRating)?'color:#f59e0b;':'color:#ddd;'"
                       @click="reviewRating=s"
-                      @mouseenter="reviewRating=s">
+                      @mouseenter="hoverRating=s">
                   ★
                 </span>
               </div>
@@ -211,7 +211,7 @@ window.MyBookingsView = {
       <!-- AI Trip Planner Modal -->
       <div class="modal fade" id="tripPlannerModal" tabindex="-1" aria-labelledby="tripPlannerLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
-          <div class="modal-content">
+          <div class="modal-content border-0 shadow-lg">
             <div class="modal-header border-0">
               <div>
                 <h5 class="modal-title display-serif mb-0" id="tripPlannerLabel">
@@ -325,6 +325,7 @@ window.MyBookingsView = {
     openReview(b) {
       this.reviewTarget = b;
       this.reviewRating = 5;
+      this.hoverRating = 0;
       this.reviewBody = "";
       this.$nextTick(() => {
         const el = document.getElementById("reviewModal");
@@ -368,8 +369,8 @@ window.MyBookingsView = {
     async exportCsv() {
       this.exporting = true;
       try {
-        const job = await api.exportBookings();
-        alert("Your bookings export is being prepared (job " + job.job_id + ").\nCheck your email — we'll send the CSV in a moment.");
+        await api.exportBookings();
+        store.toast({ title: "Export queued", body: "Check your email — the CSV will arrive shortly.", variant: "success", delay: 5000 });
       } finally { this.exporting = false; }
     },
     openPlanModal(b) {
@@ -399,7 +400,7 @@ window.MyBookingsView = {
             const cached = JSON.parse(raw);
             this.planResult = cached.data;
             this.planCached = true;
-            this.planCachedAt = new Date(cached.savedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+            this.planCachedAt = util.fmtDate(cached.savedAt);
             return;
           }
         } catch (_) { /* corrupt entry — fall through to generate */ }

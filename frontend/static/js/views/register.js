@@ -7,7 +7,7 @@ window.RegisterView = {
     };
   },
   template: /*html*/`
-    <div class="container-xxl py-5">
+    <div class="container-xxl py-4 py-lg-5">
       <div class="row justify-content-center">
         <div class="col-md-7 col-lg-5">
           <div class="text-center mb-4">

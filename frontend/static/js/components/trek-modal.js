@@ -88,7 +88,7 @@ window.TrekModal = {
 
               <!-- Star rating summary -->
               <div v-if="reviewCount" class="d-flex align-items-center gap-2 mb-3">
-                <span class="fs-5 fw-bold text-ridge">{{ avgRating }}</span>
+                <span class="fs-5 fw-bold text-ridge">{{ Number(avgRating).toFixed(1) }}</span>
                 <span>{{ starStr(avgRating) }}</span>
                 <span class="small text-muted">({{ reviewCount }} review{{ reviewCount !== 1 ? 's' : '' }})</span>
               </div>
@@ -110,7 +110,7 @@ window.TrekModal = {
                 </div>
                 <div v-else-if="reviewSummary"
                      class="alert border-0 py-2 mb-3"
-                     style="background:#f0f7f4;border-left:3px solid var(--ridge) !important;">
+                     style="background:var(--ridge-soft);border-left:3px solid var(--ridge);">
                   <div class="small fw-semibold text-ridge mb-1"><i class="bi bi-stars me-1"></i>AI Summary</div>
                   <div class="small">{{ reviewSummary }}</div>
                 </div>
@@ -118,7 +118,7 @@ window.TrekModal = {
                 <!-- Rating bar -->
                 <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded-3">
                   <div class="text-center">
-                    <div class="display-4 fw-bold text-ridge lh-1">{{ avgRating }}</div>
+                    <div class="display-4 fw-bold text-ridge lh-1">{{ Number(avgRating).toFixed(1) }}</div>
                     <div class="small">{{ starStr(avgRating) }}</div>
                     <div class="text-muted" style="font-size:0.72rem;">{{ reviewCount }} reviews</div>
                   </div>
@@ -152,7 +152,7 @@ window.TrekModal = {
             </div>
 
             <!-- ── Fitness Check tab ── -->
-            <div v-if="tab==='fitness'">
+            <div v-show="tab==='fitness'">
               <p class="text-muted small mb-3">
                 Answer a few questions and our AI will give you an honest assessment of whether this trek suits your current fitness.
               </p>

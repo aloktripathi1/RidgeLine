@@ -41,6 +41,12 @@ window.AdminTreksView = {
               </tr>
             </thead>
             <tbody>
+              <tr v-if="!treks.length">
+                <td colspan="7" class="text-center text-muted py-5">
+                  <i class="bi bi-map d-block mb-2 opacity-25" style="font-size:2rem;"></i>
+                  No treks yet. <button class="btn btn-link p-0 align-baseline text-ridge" @click="openCreate">Create the first one.</button>
+                </td>
+              </tr>
               <tr v-for="t in treks" :key="t.id">
                 <td class="ps-4">
                   <div class="fw-semibold">{{ t.name }}</div>
@@ -75,7 +81,7 @@ window.AdminTreksView = {
       <div class="modal fade" id="trekFormModal" tabindex="-1" aria-hidden="true" ref="formModal">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
           <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header">
+            <div class="modal-header border-0">
               <h5 class="modal-title display-serif">{{ mode === 'create' ? 'New trek' : 'Edit trek' }}</h5>
               <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -154,7 +160,7 @@ window.AdminTreksView = {
                 </div>
               </form>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer border-0">
               <button class="btn btn-link text-muted" data-bs-dismiss="modal">Cancel</button>
               <button class="btn btn-ridge" type="submit" form="trekForm" :disabled="saving">
                 <span v-if="saving" class="spinner-border spinner-border-sm me-2"></span>
@@ -168,7 +174,7 @@ window.AdminTreksView = {
       <!-- Delete confirm -->
       <div class="modal fade" id="trekDelModal" tabindex="-1" aria-hidden="true" ref="delModal">
         <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content border-0 shadow">
+          <div class="modal-content border-0 shadow-lg">
             <div class="modal-header border-0 pb-0">
               <h5 class="modal-title display-serif">Delete this trek?</h5>
               <button class="btn-close" data-bs-dismiss="modal"></button>

@@ -6,7 +6,7 @@ window.StaffTrekView = {
   props: ["id"],
   data() {
     return {
-      trek: null, participants: [], loading: true, saving: false, saveError: "",
+      trek: null, participants: [], loading: true, saving: false,
       // Announcement
       announceForm: { message_type: "general", notes: "" },
       announceDraft: null, announceDraftLoading: false,
@@ -42,19 +42,24 @@ window.StaffTrekView = {
               <div class="card-body">
                 <h6 class="text-uppercase small fw-bold mb-3">Status pipeline</h6>
                 <div class="position-relative mb-3">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div v-for="(s, i) in pipeline" :key="s"
-                         class="d-flex flex-column align-items-center text-center flex-grow-1">
-                      <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
-                           :class="i <= currentStep ? 'bg-ridge text-white' : 'bg-light text-muted'"
-                           style="width:36px;height:36px;">
-                        <i v-if="i < currentStep" class="bi bi-check-lg"></i>
-                        <span v-else>{{ i + 1 }}</span>
+                  <div class="d-flex align-items-start">
+                    <template v-for="(s, i) in pipeline" :key="s">
+                      <div class="d-flex flex-column align-items-center text-center flex-grow-1">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+                             :class="i <= currentStep ? 'bg-ridge text-white' : 'bg-light text-muted'"
+                             style="width:36px;height:36px;">
+                          <i v-if="i < currentStep" class="bi bi-check-lg"></i>
+                          <span v-else>{{ i + 1 }}</span>
+                        </div>
+                        <div class="small mt-1" :class="i === currentStep ? 'fw-semibold text-ridge' : 'text-muted'">
+                          {{ s }}
+                        </div>
                       </div>
-                      <div class="small mt-1" :class="i === currentStep ? 'fw-semibold text-ridge' : 'text-muted'">
-                        {{ s }}
-                      </div>
-                    </div>
+                      <div v-if="i < pipeline.length - 1"
+                           class="flex-shrink-0 mt-2"
+                           style="height:2px;flex:1;margin:15px -8px 0;min-width:8px;"
+                           :style="i < currentStep ? 'background:var(--ridge);' : 'background:#dee2e6;'"></div>
+                    </template>
                   </div>
                 </div>
 
@@ -102,7 +107,6 @@ window.StaffTrekView = {
           <!-- Right column: announce card + participants -->
           <div class="col-lg-7">
           <!-- Announce card -->
-          <div class="mb-4">
             <div class="card border-0 shadow-sm mb-4">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -147,7 +151,6 @@ window.StaffTrekView = {
                 </div>
               </div>
             </div>
-          </div>
 
           <!-- Participants -->
           <div>
