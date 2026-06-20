@@ -30,6 +30,16 @@ def _get_client():
     return anthropic.Anthropic(api_key=api_key)
 
 
+def _extract_json(text: str) -> dict:
+    """Parse JSON from Claude output, stripping markdown code fences if present."""
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        inner = "\n".join(lines[1:-1]) if lines[-1].strip() == "```" else "\n".join(lines[1:])
+        text = inner.strip()
+    return json.loads(text)
+
+
 def _trek_summary(t) -> str:
     return (
         f"- {t.name} ({t.location}) | {t.difficulty.value} | {t.duration_days} days | "
@@ -122,7 +132,7 @@ Respond with ONLY valid JSON in this exact format (no markdown, no extra text):
             messages=[{"role": "user", "content": prompt}],
         )
         raw = msg.content[0].text.strip()
-        data = json.loads(raw)
+        data = _extract_json(raw)
 
         # Attach trek ids to recommendations
         trek_map = {t.name: t.id for t in open_treks}
@@ -180,7 +190,7 @@ Respond with ONLY valid JSON (no markdown, no extra text):
             messages=[{"role": "user", "content": prompt}],
         )
         raw = msg.content[0].text.strip()
-        data = json.loads(raw)
+        data = _extract_json(raw)
         data["trek_name"] = trek.name
         data["trek_location"] = trek.location
         return success_response(data, message="Itinerary generated")
