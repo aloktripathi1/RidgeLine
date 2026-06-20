@@ -8,6 +8,7 @@ from ..auth import get_current_user, require_roles
 from ..database import get_db
 from ..models.booking import Booking, BookingStatus
 from ..models.notification import Notification
+from ..models.trek import Trek
 from ..models.user import User, UserRole
 from ..schemas.common import success_response
 from ..services.notification_service import push
@@ -81,8 +82,13 @@ class BroadcastRequest(BaseModel):
 def broadcast(
     payload: BroadcastRequest,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles([UserRole.admin, UserRole.staff])),
+    current_user: User = Depends(require_roles([UserRole.admin, UserRole.staff])),
 ):
+    if current_user.role == UserRole.staff:
+        trek = db.get(Trek, payload.trek_id)
+        if trek is None or trek.assigned_staff_id != current_user.id:
+            raise HTTPException(403, "You can only broadcast to your own assigned trek")
+
     bookings = (
         db.query(Booking)
         .filter(
