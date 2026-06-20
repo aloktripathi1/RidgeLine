@@ -35,6 +35,43 @@ Ridgeline is a production-grade trek booking application built for the Indian Hi
 
 ---
 
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/catalog.png" alt="Trek Catalog" />
+      <br /><sub><b>Trek Catalog</b> — filterable grid with live slot counts</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/trek-modal.png" alt="Trek Detail Modal" />
+      <br /><sub><b>Trek Detail</b> — pricing, reviews, and booking</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/fitness-check.png" alt="AI Fitness Check" />
+      <br /><sub><b>AI Fitness Check</b> — personalised Go / Caution / Rethink verdict</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/trip-planner.png" alt="AI Trip Planner" />
+      <br /><sub><b>AI Trip Planner</b> — day-by-day itinerary with packing list</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/admin-dashboard.png" alt="Admin Dashboard" />
+      <br /><sub><b>Admin Dashboard</b> — metrics, occupancy trends, quick links</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/notifications.png" alt="Notification Center" />
+      <br /><sub><b>Notification Center</b> — waitlist alerts and staff announcements</sub>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## ✨ Features
 
 ### Core Platform
