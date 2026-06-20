@@ -79,6 +79,97 @@ def init_database() -> None:
                 conn.commit()
 
     with session_scope() as db:
+        now = datetime.utcnow()
+
+        # --- Idempotent data migrations (run on every startup) ---
+
+        # Fix Sandakphu Ridge image: old photo was a generic sunset silhouette;
+        # replace with the actual Kanchenjunga range panorama seen from the ridge.
+        sandakphu = db.query(Trek).filter(Trek.name == "Sandakphu Ridge").first()
+        if sandakphu and "1486870591958" in (sandakphu.image_url or ""):
+            sandakphu.image_url = (
+                "https://images.unsplash.com/photo-X1fiJchaKF4"
+                "?auto=format&fit=crop&w=1200&q=70"
+            )
+
+        # Seed the three additional demo treks if they don't exist yet.
+        if settings.seed_demo_data:
+            _new_names = {"Kedarkantha Peak", "Valley of Flowers", "Pin Parvati Pass"}
+            _existing = {
+                t.name
+                for t in db.query(Trek).filter(Trek.name.in_(_new_names)).all()
+            }
+            if _new_names - _existing:
+                _s1 = db.query(User).filter(User.email == "devraj@ridgeline.app").first()
+                _s2 = db.query(User).filter(User.email == "karma@ridgeline.app").first()
+                _today = date.today()
+
+                def _end(start: date, days: int) -> date:
+                    return start + timedelta(days=days - 1)
+
+                _extra: list[Trek] = []
+                if "Kedarkantha Peak" not in _existing and _s1:
+                    _t = _today + timedelta(days=55)
+                    _extra.append(Trek(
+                        name="Kedarkantha Peak",
+                        location="Uttarakhand",
+                        difficulty=TrekDifficulty.Moderate,
+                        duration_days=6,
+                        max_slots=15,
+                        available_slots=15,
+                        assigned_staff_id=_s1.id,
+                        status=TrekStatus.Open,
+                        start_date=_t,
+                        end_date=_end(_t, 6),
+                        description="A stunning winter summit trek through snow-clad forests and frozen lakes, reaching 12,500 ft for a 360-degree Himalayan panorama.",
+                        price=8500,
+                        image_url="https://images.unsplash.com/photo-xvNE3FW8Vd8?auto=format&fit=crop&w=1200&q=70",
+                        created_at=now,
+                        updated_at=now,
+                    ))
+                if "Valley of Flowers" not in _existing and _s2:
+                    _t = _today + timedelta(days=68)
+                    _extra.append(Trek(
+                        name="Valley of Flowers",
+                        location="Uttarakhand",
+                        difficulty=TrekDifficulty.Easy,
+                        duration_days=5,
+                        max_slots=20,
+                        available_slots=20,
+                        assigned_staff_id=_s2.id,
+                        status=TrekStatus.Open,
+                        start_date=_t,
+                        end_date=_end(_t, 5),
+                        description="A UNESCO World Heritage walk through alpine meadows ablaze with hundreds of Himalayan wildflowers set against the backdrop of Nanda Devi.",
+                        price=7500,
+                        image_url="https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200&q=70",
+                        created_at=now,
+                        updated_at=now,
+                    ))
+                if "Pin Parvati Pass" not in _existing and _s1:
+                    _t = _today + timedelta(days=80)
+                    _extra.append(Trek(
+                        name="Pin Parvati Pass",
+                        location="Himachal Pradesh",
+                        difficulty=TrekDifficulty.Hard,
+                        duration_days=11,
+                        max_slots=12,
+                        available_slots=12,
+                        assigned_staff_id=_s1.id,
+                        status=TrekStatus.Pending,
+                        start_date=_t,
+                        end_date=_end(_t, 11),
+                        description="One of India's most demanding crossovers linking the lush Parvati Valley to stark Spiti at 17,457 ft across glaciers and moraines.",
+                        price=21000,
+                        image_url="https://images.unsplash.com/photo-BpkQNEq_LlM?auto=format&fit=crop&w=1200&q=70",
+                        created_at=now,
+                        updated_at=now,
+                    ))
+                if _extra:
+                    db.add_all(_extra)
+
+        # --- End of data migrations ---
+
         existing_admin = (
             db.query(User)
             .filter(User.role == UserRole.admin)
@@ -87,8 +178,6 @@ def init_database() -> None:
         )
         if existing_admin is not None:
             return
-
-        now = datetime.utcnow()
         admin_user = User(
             name=settings.seed_admin_name,
             email=settings.seed_admin_email,
@@ -165,10 +254,13 @@ def init_database() -> None:
                 return start
             return start + timedelta(days=duration - 1)
 
-        # A small trek catalog so the UI isn't empty on first run.
-        trek_1_start = date.today() + timedelta(days=24)
-        trek_2_start = date.today() + timedelta(days=32)
-        trek_3_start = date.today() + timedelta(days=45)
+        # Trek catalog seeded on first run.
+        t1s = date.today() + timedelta(days=24)
+        t2s = date.today() + timedelta(days=32)
+        t3s = date.today() + timedelta(days=45)
+        t4s = date.today() + timedelta(days=55)
+        t5s = date.today() + timedelta(days=68)
+        t6s = date.today() + timedelta(days=80)
 
         treks = [
             Trek(
@@ -180,9 +272,9 @@ def init_database() -> None:
                 available_slots=20,
                 assigned_staff_id=staff_1.id,
                 status=TrekStatus.Open,
-                start_date=trek_1_start,
-                end_date=end_date(trek_1_start, 5),
-                description="A classic crossover trek from lush valleys to dramatic high-altitude terrain.",
+                start_date=t1s,
+                end_date=end_date(t1s, 5),
+                description="A classic crossover trek from lush Kullu valleys to the dramatic moonscape of Lahaul, cresting a high glacial saddle at 14,100 ft.",
                 price=9500,
                 image_url="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=70",
                 created_at=now,
@@ -197,11 +289,11 @@ def init_database() -> None:
                 available_slots=18,
                 assigned_staff_id=staff_2.id,
                 status=TrekStatus.Open,
-                start_date=trek_2_start,
-                end_date=end_date(trek_2_start, 6),
-                description="Walk the spine of the Singalila range with legendary Himalayan panoramas.",
+                start_date=t2s,
+                end_date=end_date(t2s, 6),
+                description="Walk the spine of the Singalila range to West Bengal's highest peak for the iconic Sleeping Buddha view of Kanchenjunga, Makalu, and Everest.",
                 price=11000,
-                image_url="https://images.unsplash.com/photo-1486870591958-9b9d0d1dde9b?auto=format&fit=crop&w=1200&q=70",
+                image_url="https://images.unsplash.com/photo-X1fiJchaKF4?auto=format&fit=crop&w=1200&q=70",
                 created_at=now,
                 updated_at=now,
             ),
@@ -214,11 +306,62 @@ def init_database() -> None:
                 available_slots=16,
                 assigned_staff_id=staff_2.id,
                 status=TrekStatus.Open,
-                start_date=trek_3_start,
-                end_date=end_date(trek_3_start, 8),
-                description="Eight days of varied terrain culminating in a high snow pass at 15,250 ft.",
+                start_date=t3s,
+                end_date=end_date(t3s, 8),
+                description="Eight days of varied terrain — waterfalls, hanging villages, and snow bridges — culminating in a dramatic high snow pass at 15,250 ft.",
                 price=14500,
                 image_url="https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=1200&q=70",
+                created_at=now,
+                updated_at=now,
+            ),
+            Trek(
+                name="Kedarkantha Peak",
+                location="Uttarakhand",
+                difficulty=TrekDifficulty.Moderate,
+                duration_days=6,
+                max_slots=15,
+                available_slots=15,
+                assigned_staff_id=staff_1.id,
+                status=TrekStatus.Open,
+                start_date=t4s,
+                end_date=end_date(t4s, 6),
+                description="A stunning winter summit trek through snow-clad forests and frozen lakes, reaching 12,500 ft for a 360-degree Himalayan panorama.",
+                price=8500,
+                image_url="https://images.unsplash.com/photo-xvNE3FW8Vd8?auto=format&fit=crop&w=1200&q=70",
+                created_at=now,
+                updated_at=now,
+            ),
+            Trek(
+                name="Valley of Flowers",
+                location="Uttarakhand",
+                difficulty=TrekDifficulty.Easy,
+                duration_days=5,
+                max_slots=20,
+                available_slots=20,
+                assigned_staff_id=staff_2.id,
+                status=TrekStatus.Open,
+                start_date=t5s,
+                end_date=end_date(t5s, 5),
+                description="A UNESCO World Heritage walk through alpine meadows ablaze with hundreds of Himalayan wildflowers set against the backdrop of Nanda Devi.",
+                price=7500,
+                image_url="https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=1200&q=70",
+                created_at=now,
+                updated_at=now,
+            ),
+            Trek(
+                name="Pin Parvati Pass",
+                location="Himachal Pradesh",
+                difficulty=TrekDifficulty.Hard,
+                duration_days=11,
+                max_slots=12,
+                available_slots=12,
+                assigned_staff_id=staff_1.id,
+                status=TrekStatus.Pending,
+                start_date=t6s,
+                end_date=end_date(t6s, 11),
+                description="One of India's most demanding crossovers linking the lush Parvati Valley to stark Spiti at 17,457 ft across glaciers and moraines.",
+                price=21000,
+                image_url="https://images.unsplash.com/photo-BpkQNEq_LlM?auto=format&fit=crop&w=1200&q=70",
                 created_at=now,
                 updated_at=now,
             ),
