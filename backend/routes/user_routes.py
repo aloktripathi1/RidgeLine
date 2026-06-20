@@ -60,7 +60,7 @@ def update_my_profile(
     updates = payload.model_dump(exclude_unset=True)
     if not updates:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No changes")
-    updated = user_service.update_user_admin(db, current_user, updates)
+    updated = user_service.update_user_profile(db, current_user, updates)
     return success_response(_user_public(updated), message="Profile updated")
 
 

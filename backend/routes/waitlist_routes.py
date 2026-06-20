@@ -70,9 +70,12 @@ def my_waitlist(
         .order_by(WaitlistEntry.joined_at)
         .all()
     )
+    trek_ids = {e.trek_id for e in entries}
+    treks = {t.id: t for t in db.query(Trek).filter(Trek.id.in_(trek_ids)).all()} if trek_ids else {}
+
     result = []
     for e in entries:
-        trek = db.get(Trek, e.trek_id)
+        trek = treks.get(e.trek_id)
         position = (
             db.query(WaitlistEntry)
             .filter(WaitlistEntry.trek_id == e.trek_id, WaitlistEntry.joined_at <= e.joined_at)

@@ -196,5 +196,16 @@ def update_trek_staff(db: Session, trek: Trek, staff_user: User, payload: dict) 
 
 
 def delete_trek(db: Session, trek: Trek) -> None:
+    from ..models.booking import Booking, BookingStatus
+    active_count = (
+        db.query(Booking)
+        .filter(Booking.trek_id == trek.id, Booking.status == BookingStatus.Booked)
+        .count()
+    )
+    if active_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot delete trek with {active_count} active booking(s). Cancel them first.",
+        )
     db.delete(trek)
     db.commit()

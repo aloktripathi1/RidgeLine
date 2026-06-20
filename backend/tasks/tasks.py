@@ -31,7 +31,12 @@ def _upcoming_treks(db: Session, start: date, end: date) -> list[Trek]:
     )
 
 
-@celery_app.task(name="ridgeline.backend.tasks.tasks.daily_upcoming_treks_reminder")
+@celery_app.task(
+    name="ridgeline.backend.tasks.tasks.daily_upcoming_treks_reminder",
+    autoretry_for=(Exception,),
+    max_retries=3,
+    default_retry_delay=120,
+)
 def daily_upcoming_treks_reminder() -> dict:
     today = date.today()
     horizon = today + timedelta(days=7)
@@ -65,7 +70,12 @@ def daily_upcoming_treks_reminder() -> dict:
         return {"sent": sent}
 
 
-@celery_app.task(name="ridgeline.backend.tasks.tasks.monthly_admin_report")
+@celery_app.task(
+    name="ridgeline.backend.tasks.tasks.monthly_admin_report",
+    autoretry_for=(Exception,),
+    max_retries=3,
+    default_retry_delay=300,
+)
 def monthly_admin_report() -> dict:
     now = datetime.utcnow()
     first_day_this_month = datetime(now.year, now.month, 1)
@@ -124,7 +134,12 @@ def monthly_admin_report() -> dict:
         return {"sent": 1}
 
 
-@celery_app.task(name="ridgeline.backend.tasks.tasks.export_booking_history_csv")
+@celery_app.task(
+    name="ridgeline.backend.tasks.tasks.export_booking_history_csv",
+    autoretry_for=(Exception,),
+    max_retries=3,
+    default_retry_delay=60,
+)
 def export_booking_history_csv(user_id: int) -> dict:
     with session_scope() as db:
         user = db.query(User).filter(User.id == user_id).first()
@@ -138,7 +153,7 @@ def export_booking_history_csv(user_id: int) -> dict:
             .all()
         )
         exports_dir = _exports_dir()
-        filename = f"bookings_user_{user_id}_{int(datetime.utcnow().timestamp())}.csv"
+        filename = f"bookings_user_{user_id}.csv"
         path = exports_dir / filename
 
         with path.open("w", newline="", encoding="utf-8") as f:

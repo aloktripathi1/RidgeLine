@@ -3,7 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy import update
+from sqlalchemy.orm import Session, selectinload
 
 from ..models.booking import Booking, BookingStatus
 from ..models.trek import TrekStatus, Trek
@@ -13,6 +14,7 @@ from ..models.user import User
 def list_my_bookings(db: Session, user_id: int) -> list[Booking]:
     return (
         db.query(Booking)
+        .options(selectinload(Booking.trek))
         .filter(Booking.user_id == user_id)
         .order_by(Booking.booking_date.desc(), Booking.id.desc())
         .all()
@@ -22,6 +24,7 @@ def list_my_bookings(db: Session, user_id: int) -> list[Booking]:
 def list_bookings_for_trek(db: Session, trek_id: int) -> list[Booking]:
     return (
         db.query(Booking)
+        .options(selectinload(Booking.user))
         .filter(Booking.trek_id == trek_id)
         .order_by(Booking.booking_date.desc(), Booking.id.desc())
         .all()
@@ -44,10 +47,17 @@ def _has_active_booking(db: Session, user_id: int, trek_id: int) -> bool:
 def create_booking(db: Session, user: User, trek: Trek) -> Booking:
     if trek.status != TrekStatus.Open:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Trek is not open for booking")
-    if trek.available_slots <= 0:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No slots available")
     if _has_active_booking(db, user.id, trek.id):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have an active booking for this trek")
+
+    # Atomic decrement: only succeeds if available_slots > 0, preventing overbooking under concurrent requests
+    result = db.execute(
+        update(Trek)
+        .where(Trek.id == trek.id, Trek.available_slots > 0)
+        .values(available_slots=Trek.available_slots - 1)
+    )
+    if result.rowcount == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No slots available")
 
     now = datetime.utcnow()
     booking = Booking(
@@ -56,10 +66,7 @@ def create_booking(db: Session, user: User, trek: Trek) -> Booking:
         booking_date=now,
         status=BookingStatus.Booked,
     )
-    trek.available_slots -= 1
-
     db.add(booking)
-    db.add(trek)
     db.commit()
     db.refresh(booking)
     return booking

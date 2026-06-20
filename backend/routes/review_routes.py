@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from ..auth import get_current_user
+from ..auth import get_current_user, require_roles
 from ..database import get_db
 from ..models.booking import Booking, BookingStatus
 from ..models.review import Review
-from ..models.user import User
+from ..models.user import User, UserRole
 from ..schemas.common import success_response
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
@@ -26,7 +26,7 @@ class ReviewCreate(BaseModel):
 def create_review(
     payload: ReviewCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_roles([UserRole.trekker])),
 ):
     booking = db.get(Booking, payload.booking_id)
     if not booking or booking.user_id != current_user.id:
@@ -61,15 +61,17 @@ def trek_reviews(trek_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
+    user_ids = {r.user_id for r in reviews}
+    users = {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()} if user_ids else {}
     result = []
     for r in reviews:
-        user = db.get(User, r.user_id)
+        u = users.get(r.user_id)
         result.append({
             "id": r.id,
             "rating": r.rating,
             "body": r.body,
             "created_at": r.created_at.isoformat(),
-            "user_name": user.name if user else "Anonymous",
+            "user_name": u.name if u else "Anonymous",
         })
 
     avg = round(sum(r.rating for r in reviews) / len(reviews), 1) if reviews else 0

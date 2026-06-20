@@ -74,6 +74,23 @@ def search_users(db: Session, query: str) -> list[User]:
     )
 
 
+def update_user_profile(db: Session, user: User, updates: dict) -> User:
+    """Self-service profile update — only permits fields a user can change for themselves."""
+    allowed_fields = {"name", "phone", "bio", "avatar_url"}
+    for field_name, field_value in updates.items():
+        if field_name not in allowed_fields:
+            continue
+        if field_value is None:
+            continue
+        setattr(user, field_name, field_value)
+
+    user.updated_at = datetime.utcnow()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 def update_user_admin(db: Session, user: User, updates: dict) -> User:
     allowed_fields = {"name", "email", "active", "blacklisted", "phone", "bio", "avatar_url"}
     for field_name, field_value in updates.items():

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class TrekPublic(BaseModel):
@@ -34,8 +34,14 @@ class TrekCreateRequest(BaseModel):
     start_date: date
     end_date: date | None = None
     description: str = Field(min_length=20, max_length=2000)
-    price: int = Field(ge=0)
+    price: int = Field(ge=1)
     image_url: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def end_after_start(self) -> "TrekCreateRequest":
+        if self.end_date is not None and self.end_date < self.start_date:
+            raise ValueError("end_date must be on or after start_date")
+        return self
 
 
 class TrekUpdateRequest(BaseModel):
@@ -50,5 +56,11 @@ class TrekUpdateRequest(BaseModel):
     start_date: date | None = None
     end_date: date | None = None
     description: str | None = Field(default=None, min_length=20, max_length=2000)
-    price: int | None = Field(default=None, ge=0)
+    price: int | None = Field(default=None, ge=1)
     image_url: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def end_after_start(self) -> "TrekUpdateRequest":
+        if self.start_date is not None and self.end_date is not None and self.end_date < self.start_date:
+            raise ValueError("end_date must be on or after start_date")
+        return self

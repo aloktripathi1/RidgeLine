@@ -12,8 +12,8 @@ class WaitlistEntry(Base):
     __tablename__ = "waitlist"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    trek_id: Mapped[int] = mapped_column(Integer, ForeignKey("treks.id"), nullable=False)
-    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    trek_id: Mapped[int] = mapped_column(Integer, ForeignKey("treks.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     joined_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
 
     __table_args__ = (

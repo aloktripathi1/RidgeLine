@@ -71,7 +71,13 @@ def all_bookings(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles([UserRole.admin])),
 ):
-    bookings = db.query(Booking).order_by(Booking.booking_date.desc(), Booking.id.desc()).all()
+    from sqlalchemy.orm import selectinload
+    bookings = (
+        db.query(Booking)
+        .options(selectinload(Booking.user), selectinload(Booking.trek))
+        .order_by(Booking.booking_date.desc(), Booking.id.desc())
+        .all()
+    )
     payload = [_booking_to_dict(b, include_user=True, include_trek=True) for b in bookings]
     return success_response(payload)
 
@@ -116,11 +122,15 @@ async def update_booking(
     booking = booking_service.get_booking_or_404(db, booking_id)
 
     if payload.status == BookingStatus.Cancelled.value:
+        if current_user.role != UserRole.trekker:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only trekkers can cancel their own bookings")
         updated = booking_service.cancel_booking(db, booking, current_user)
         await invalidate_trek_cache(updated.trek_id)
         return success_response(_booking_to_dict(updated, include_user=False, include_trek=False), message="Cancelled")
 
-    if payload.status == BookingStatus.Completed.value and current_user.role == UserRole.staff:
+    if payload.status == BookingStatus.Completed.value:
+        if current_user.role != UserRole.staff:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only assigned staff can mark bookings complete")
         updated = booking_service.complete_booking_by_staff(db, booking, current_user)
         await invalidate_trek_cache(updated.trek_id)
         return success_response(_booking_to_dict(updated, include_user=False, include_trek=False), message="Completed")
