@@ -56,6 +56,9 @@ def init_database() -> None:
     from .models import booking  # noqa: F401
     from .models import staff_profile  # noqa: F401
     from .models import trek  # noqa: F401
+    from .models import review  # noqa: F401
+    from .models import waitlist  # noqa: F401
+    from .models import notification  # noqa: F401
     from datetime import date, timedelta
 
     from .models.user import User, UserRole

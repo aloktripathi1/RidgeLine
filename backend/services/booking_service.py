@@ -85,10 +85,33 @@ def cancel_booking(db: Session, booking: Booking, user: User) -> Booking:
         if trek.available_slots > trek.max_slots:
             trek.available_slots = trek.max_slots
         db.add(trek)
+        # Notify the first person on the waitlist that a slot opened up
+        _notify_next_on_waitlist(db, trek)
     db.add(booking)
     db.commit()
     db.refresh(booking)
     return booking
+
+
+def _notify_next_on_waitlist(db: Session, trek) -> None:
+    from ..models.waitlist import WaitlistEntry
+    from ..services.notification_service import push
+
+    next_entry = (
+        db.query(WaitlistEntry)
+        .filter(WaitlistEntry.trek_id == trek.id)
+        .order_by(WaitlistEntry.joined_at)
+        .first()
+    )
+    if next_entry:
+        push(
+            db,
+            next_entry.user_id,
+            title=f"A slot opened on {trek.name}!",
+            body="A cancellation just freed up a spot. Book now before it fills again.",
+            type="success",
+            link="#/catalog",
+        )
 
 
 def complete_booking_by_staff(db: Session, booking: Booking, staff_user: User) -> Booking:

@@ -81,6 +81,22 @@ class ChatRequest(BaseModel):
     trek_id: int | None = None
 
 
+class FitnessCheckRequest(BaseModel):
+    trek_id: int
+    age: int
+    fitness: str = "active"   # sedentary | active | athletic
+    health_notes: str = ""
+    previous_treks: int = 0
+
+
+class AnnouncementRequest(BaseModel):
+    trek_name: str
+    trek_location: str
+    trek_date: str
+    message_type: str = "general"  # weather_delay | gear_reminder | meetup_info | general
+    notes: str = ""
+
+
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @router.post("/recommend")
@@ -279,3 +295,135 @@ Never make up trek details. Always encourage users to book via the platform."""
     except Exception as e:
         logger.error("AI chat error: %s", e)
         raise HTTPException(status_code=502, detail="AI service error. Please try again.")
+
+
+@router.post("/fitness-check")
+async def fitness_check(
+    payload: FitnessCheckRequest,
+    db: Session = Depends(get_db),
+):
+    client = _get_client()
+    trek = trek_service.get_trek_or_404(db, payload.trek_id)
+
+    fitness_map = {"sedentary": "mostly inactive, desk job", "active": "regular walks/gym 2-3x/week", "athletic": "serious athlete, runs/climbs regularly"}
+    fitness_desc = fitness_map.get(payload.fitness, payload.fitness)
+
+    prompt = f"""You are a trekking safety advisor for Ridgeline, a Himalayan trek platform.
+
+A trekker wants to know if they are fit enough for this trek:
+- Trek: {trek.name} ({trek.location})
+- Difficulty: {trek.difficulty.value}
+- Duration: {trek.duration_days} days
+- Description: {trek.description or ""}
+
+Trekker profile:
+- Age: {payload.age} years
+- Fitness: {fitness_desc}
+- Previous treks completed: {payload.previous_treks}
+- Health notes: {payload.health_notes or "None"}
+
+Give an honest, personalised assessment. Respond with ONLY valid JSON:
+{{
+  "verdict": "Go" | "Caution" | "Rethink",
+  "reason": "2-3 sentence honest assessment tailored to this person",
+  "prep_tips": ["tip1", "tip2", "tip3"]
+}}
+
+"Go" = well suited, minimal concerns.
+"Caution" = doable with specific preparation.
+"Rethink" = significant mismatch — recommend an easier trek instead."""
+
+    try:
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=400,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        data = _extract_json(msg.content[0].text)
+        return success_response(data, "Fitness check complete")
+    except json.JSONDecodeError:
+        raise HTTPException(502, "AI returned unexpected format. Try again.")
+    except Exception as e:
+        logger.error("AI fitness-check error: %s", e)
+        raise HTTPException(502, "AI service error. Please try again.")
+
+
+@router.get("/review-summary/{trek_id}")
+async def review_summary(trek_id: int, db: Session = Depends(get_db)):
+    from ..models.review import Review
+
+    reviews = db.query(Review).filter(Review.trek_id == trek_id).all()
+    if len(reviews) < 3:
+        return success_response({"summary": None}, "Not enough reviews yet")
+
+    client = _get_client()
+    lines = "\n".join(
+        f"[{r.rating}/5] {r.body}" for r in reviews if r.body.strip()
+    )
+    if not lines:
+        return success_response({"summary": None})
+
+    prompt = f"""Summarise trekker reviews for a Himalayan trek booking platform.
+
+Reviews:
+{lines}
+
+Write a balanced 2-sentence summary that highlights what trekkers love and any common concerns.
+Keep it factual, concise, and useful for someone deciding whether to book.
+Respond with ONLY plain text — no JSON, no bullet points, no markdown."""
+
+    try:
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=150,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return success_response({"summary": msg.content[0].text.strip()})
+    except Exception as e:
+        logger.error("AI review-summary error: %s", e)
+        return success_response({"summary": None})
+
+
+@router.post("/draft-announcement")
+async def draft_announcement(
+    payload: AnnouncementRequest,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles([UserRole.admin, UserRole.staff])),
+):
+    client = _get_client()
+
+    type_hints = {
+        "weather_delay": "inform trekkers of a weather-related delay or change",
+        "gear_reminder": "remind trekkers to pack specific gear before departure",
+        "meetup_info": "share meetup point, time and logistics for trek day",
+        "general": "send a general update or announcement to the group",
+    }
+    purpose = type_hints.get(payload.message_type, "send an update")
+
+    prompt = f"""You are writing a short announcement from Ridgeline trek operations to trekkers.
+
+Trek: {payload.trek_name} · {payload.trek_location}
+Departure: {payload.trek_date}
+Purpose: {purpose}
+Staff notes: {payload.notes or "None"}
+
+Write a friendly, professional in-app notification. Keep it under 60 words.
+Respond with ONLY valid JSON:
+{{
+  "title": "Short notification title (under 8 words)",
+  "body": "The full message (under 60 words)"
+}}"""
+
+    try:
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        data = _extract_json(msg.content[0].text)
+        return success_response(data, "Draft ready")
+    except json.JSONDecodeError:
+        raise HTTPException(502, "AI returned unexpected format.")
+    except Exception as e:
+        logger.error("AI draft-announcement error: %s", e)
+        raise HTTPException(502, "AI service error. Please try again.")

@@ -17,6 +17,7 @@
     token: localStorage.getItem(TOKEN_KEY) || null,
     user: null,
     toasts: [], // {id, title, body, variant}
+    notifUnread: 0,
   });
 
   if (state.token) {
@@ -54,5 +55,7 @@
     }, delay);
   }
 
-  global.store = { state, setAuth, setUser, logout, toast };
+  function setNotifUnread(n) { state.notifUnread = n; }
+
+  global.store = { state, setAuth, setUser, logout, toast, setNotifUnread };
 })(window);

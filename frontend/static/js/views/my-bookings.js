@@ -3,6 +3,12 @@ window.MyBookingsView = {
   data() {
     return {
       bookings: [], loading: true, exporting: false, cancelling: null,
+      // Reviews
+      reviewedBookingIds: [],
+      reviewTarget: null, reviewRating: 5, reviewBody: "", reviewSaving: false, reviewModalInst: null,
+      // Waitlist
+      waitlist: [],
+      waitlistLeaving: null,
       // AI Trip Planner
       planTrek: null,
       planLoading: false,
@@ -110,12 +116,94 @@ window.MyBookingsView = {
                         <span v-if="cancelling === b.id" class="spinner-border spinner-border-sm me-1"></span>
                         Cancel
                       </button>
-                      <span v-if="b.status !== 'Booked'" class="text-muted small">—</span>
+                      <!-- Review button for completed, un-reviewed treks -->
+                      <button v-if="b.status === 'Completed' && !reviewedBookingIds.includes(b.id)"
+                              class="btn btn-sm btn-outline-ridge"
+                              @click="openReview(b)">
+                        <i class="bi bi-star me-1"></i>Review
+                      </button>
+                      <span v-if="b.status === 'Completed' && reviewedBookingIds.includes(b.id)"
+                            class="small text-muted"><i class="bi bi-star-fill text-warning me-1"></i>Reviewed</span>
+                      <span v-if="b.status === 'Cancelled'" class="text-muted small">—</span>
                     </div>
                   </td>
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Waitlist section -->
+      <div v-if="waitlist.length" class="mt-4">
+        <h2 class="display-serif h5 mb-3">Waitlist</h2>
+        <div class="card border-0 shadow-sm">
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-4">Trek</th>
+                  <th>Position</th>
+                  <th class="d-none d-md-table-cell">Joined</th>
+                  <th class="text-end pe-4">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="w in waitlist" :key="w.trek_id">
+                  <td class="ps-4">
+                    <div class="fw-semibold">{{ w.trek_name }}</div>
+                    <div class="small text-muted"><i class="bi bi-geo-alt"></i> {{ w.trek_location }}</div>
+                  </td>
+                  <td>
+                    <span class="badge bg-secondary">#{{ w.position }}</span>
+                  </td>
+                  <td class="d-none d-md-table-cell text-body-secondary">{{ fmtDate(w.joined_at) }}</td>
+                  <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-danger"
+                            :disabled="waitlistLeaving === w.trek_id"
+                            @click="leaveWaitlist(w)">
+                      <span v-if="waitlistLeaving === w.trek_id" class="spinner-border spinner-border-sm me-1"></span>
+                      Leave
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review modal -->
+      <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+              <h5 class="modal-title display-serif">Rate your trek</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-0" v-if="reviewTarget">
+              <p class="text-muted small mb-3">{{ reviewTarget.trek.name }} · {{ reviewTarget.trek.location }}</p>
+              <!-- Star picker -->
+              <div class="d-flex gap-1 mb-3" style="font-size:2rem;">
+                <span v-for="s in [1,2,3,4,5]" :key="s"
+                      style="cursor:pointer;transition:transform .1s;"
+                      :style="s<=reviewRating?'color:#f59e0b;':'color:#ddd;'"
+                      @click="reviewRating=s"
+                      @mouseenter="reviewRating=s">
+                  ★
+                </span>
+              </div>
+              <label class="form-label small fw-semibold text-uppercase">Your review <span class="fw-normal text-muted">(optional)</span></label>
+              <textarea v-model="reviewBody" class="form-control" rows="3"
+                        placeholder="Share what made this trek memorable…" maxlength="1000"></textarea>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+              <button class="btn btn-link text-muted" data-bs-dismiss="modal">Cancel</button>
+              <button class="btn btn-ridge" @click="submitReview" :disabled="reviewSaving">
+                <span v-if="reviewSaving" class="spinner-border spinner-border-sm me-2"></span>
+                Submit review
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -223,8 +311,49 @@ window.MyBookingsView = {
     statusClass: util.statusClass,
     async reload() {
       this.loading = true;
-      try { this.bookings = await api.myBookings(); }
-      finally { this.loading = false; }
+      try {
+        const [bookings, reviewed, wl] = await Promise.all([
+          api.myBookings(),
+          api.myReviewedBookings().catch(() => []),
+          api.myWaitlist().catch(() => []),
+        ]);
+        this.bookings = bookings;
+        this.reviewedBookingIds = reviewed;
+        this.waitlist = wl;
+      } finally { this.loading = false; }
+    },
+    openReview(b) {
+      this.reviewTarget = b;
+      this.reviewRating = 5;
+      this.reviewBody = "";
+      this.$nextTick(() => {
+        const el = document.getElementById("reviewModal");
+        if (!el) return;
+        this.reviewModalInst = bootstrap.Modal.getOrCreateInstance(el);
+        this.reviewModalInst.show();
+      });
+    },
+    async submitReview() {
+      if (!this.reviewTarget) return;
+      this.reviewSaving = true;
+      try {
+        await api.submitReview({ booking_id: this.reviewTarget.id, rating: this.reviewRating, body: this.reviewBody });
+        this.reviewedBookingIds = [...this.reviewedBookingIds, this.reviewTarget.id];
+        store.toast({ title: "Review submitted!", body: "Thanks for sharing your experience.", variant: "success" });
+        bootstrap.Modal.getInstance(document.getElementById("reviewModal"))?.hide();
+      } catch (e) {
+        store.toast({ title: "Could not submit", body: e?.response?.data?.detail || "Try again.", variant: "danger" });
+      } finally { this.reviewSaving = false; }
+    },
+    async leaveWaitlist(w) {
+      this.waitlistLeaving = w.trek_id;
+      try {
+        await api.leaveWaitlist(w.trek_id);
+        this.waitlist = this.waitlist.filter(x => x.trek_id !== w.trek_id);
+        store.toast({ title: "Left waitlist", body: w.trek_name, variant: "secondary" });
+      } catch (e) {
+        store.toast({ title: "Error", body: e?.response?.data?.detail || "Try again.", variant: "danger" });
+      } finally { this.waitlistLeaving = null; }
     },
     async cancel(b) {
       this.cancelling = b.id;

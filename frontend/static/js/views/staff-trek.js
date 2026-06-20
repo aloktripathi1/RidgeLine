@@ -5,8 +5,13 @@
 window.StaffTrekView = {
   props: ["id"],
   data() {
-    return { trek: null, participants: [], loading: true, saving: false,
-      saveError: "" };
+    return {
+      trek: null, participants: [], loading: true, saving: false, saveError: "",
+      // Announcement
+      announceForm: { message_type: "general", notes: "" },
+      announceDraft: null, announceDraftLoading: false,
+      announceSending: false,
+    };
   },
   template: /*html*/`
     <div class="container-xxl py-4 py-lg-5">
@@ -94,8 +99,58 @@ window.StaffTrekView = {
             </div>
           </div>
 
-          <!-- Participants -->
+          <!-- Right column: announce card + participants -->
           <div class="col-lg-7">
+          <!-- Announce card -->
+          <div class="mb-4">
+            <div class="card border-0 shadow-sm mb-4">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h6 class="text-uppercase small fw-bold mb-0">Announce to trekkers</h6>
+                  <span class="badge text-bg-light border">{{ activeParticipants.length }} recipients</span>
+                </div>
+                <div class="row g-2">
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold text-uppercase">Type</label>
+                    <select v-model="announceForm.message_type" class="form-select form-select-sm">
+                      <option value="general">General update</option>
+                      <option value="gear_reminder">Gear reminder</option>
+                      <option value="meetup_info">Meetup info</option>
+                      <option value="weather_delay">Weather / delay</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label small fw-semibold text-uppercase">Notes for AI <span class="fw-normal text-muted">(optional)</span></label>
+                    <input v-model="announceForm.notes" class="form-control form-control-sm"
+                           placeholder="e.g. meetup at 5am at Kasol bus stand" />
+                  </div>
+                </div>
+
+                <!-- AI draft button -->
+                <button class="btn btn-sm btn-outline-ridge w-100 mt-2" @click="draftAnnounce" :disabled="announceDraftLoading">
+                  <span v-if="announceDraftLoading" class="spinner-border spinner-border-sm me-1"></span>
+                  <i v-else class="bi bi-stars me-1"></i>
+                  {{ announceDraftLoading ? 'Drafting…' : 'AI Draft' }}
+                </button>
+
+                <!-- Editable draft -->
+                <div v-if="announceDraft" class="mt-3">
+                  <label class="form-label small fw-semibold text-uppercase">Title</label>
+                  <input v-model="announceDraft.title" class="form-control form-control-sm mb-2" />
+                  <label class="form-label small fw-semibold text-uppercase">Message</label>
+                  <textarea v-model="announceDraft.body" class="form-control form-control-sm" rows="3"></textarea>
+                  <button class="btn btn-ridge btn-sm w-100 mt-2" @click="sendAnnounce" :disabled="announceSending">
+                    <span v-if="announceSending" class="spinner-border spinner-border-sm me-1"></span>
+                    <i v-else class="bi bi-send me-1"></i>
+                    {{ announceSending ? 'Sending…' : 'Send to ' + activeParticipants.length + ' trekkers' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Participants -->
+          <div>
             <div class="card border-0 shadow-sm">
               <div class="card-body pb-0">
                 <div class="d-flex justify-content-between align-items-center">
@@ -137,6 +192,7 @@ window.StaffTrekView = {
               </div>
             </div>
           </div>
+          </div><!-- /right col -->
         </div>
       </div>
     </div>
@@ -188,7 +244,39 @@ window.StaffTrekView = {
       } catch (e) {
         store.toast({ title: "Failed", body: e?.response?.data?.detail || "Try again.", variant: "danger" });
       } finally { this.saving = false; }
-    }
+    },
+    async draftAnnounce() {
+      if (!this.trek) return;
+      this.announceDraftLoading = true;
+      try {
+        this.announceDraft = await api.aiDraftAnnouncement({
+          trek_name: this.trek.name,
+          trek_location: this.trek.location,
+          trek_date: this.trek.start_date || "TBD",
+          message_type: this.announceForm.message_type,
+          notes: this.announceForm.notes,
+        });
+      } catch (e) {
+        store.toast({ title: "AI unavailable", body: e?.response?.data?.detail || "Try again.", variant: "danger" });
+      } finally { this.announceDraftLoading = false; }
+    },
+    async sendAnnounce() {
+      if (!this.announceDraft || !this.trek) return;
+      this.announceSending = true;
+      try {
+        const res = await api.broadcastNotif({
+          trek_id: this.trek.id,
+          title: this.announceDraft.title,
+          body: this.announceDraft.body,
+          type: this.announceForm.message_type === "weather_delay" ? "warning" : "info",
+        });
+        store.toast({ title: "Announcement sent!", body: `Notified ${res.sent} trekkers.`, variant: "success" });
+        this.announceDraft = null;
+        this.announceForm.notes = "";
+      } catch (e) {
+        store.toast({ title: "Failed to send", body: e?.response?.data?.detail || "Try again.", variant: "danger" });
+      } finally { this.announceSending = false; }
+    },
   },
   created() { this.reload(); }
 };

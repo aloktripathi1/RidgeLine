@@ -20,6 +20,9 @@ from .routes.user_routes import router as user_router
 from .routes.booking_routes import router as booking_router
 from .routes.metrics_routes import router as metrics_router
 from .routes.ai_routes import router as ai_router
+from .routes.review_routes import router as review_router
+from .routes.waitlist_routes import router as waitlist_router
+from .routes.notification_routes import router as notification_router
 
 
 logger = logging.getLogger(__name__)
@@ -59,6 +62,9 @@ def create_app() -> FastAPI:
     api.include_router(booking_router)
     api.include_router(metrics_router)
     api.include_router(ai_router)
+    api.include_router(review_router)
+    api.include_router(waitlist_router)
+    api.include_router(notification_router)
     app.mount(settings.api_prefix, api)
 
     app.add_middleware(

@@ -57,9 +57,29 @@
     adminMetrics: () => call("GET", "/metrics/admin"),
 
     // AI
-    aiRecommend: (prefs) => call("POST", "/ai/recommend", prefs),
-    aiItinerary: (trekId, opts) => call("POST", "/ai/itinerary/" + trekId, opts || {}),
-    aiDescribe:  (body) => call("POST", "/ai/describe", body),
-    aiChat:      (messages, trekId) => call("POST", "/ai/chat", { messages, trek_id: trekId || null }),
+    aiRecommend:         (prefs) => call("POST", "/ai/recommend", prefs),
+    aiItinerary:         (trekId, opts) => call("POST", "/ai/itinerary/" + trekId, opts || {}),
+    aiDescribe:          (body) => call("POST", "/ai/describe", body),
+    aiChat:              (messages, trekId) => call("POST", "/ai/chat", { messages, trek_id: trekId || null }),
+    aiFitnessCheck:      (body) => call("POST", "/ai/fitness-check", body),
+    aiReviewSummary:     (trekId) => call("GET", "/ai/review-summary/" + trekId),
+    aiDraftAnnouncement: (body) => call("POST", "/ai/draft-announcement", body),
+
+    // Reviews
+    getTrekReviews:       (trekId) => call("GET", "/reviews/trek/" + trekId),
+    submitReview:         (body) => call("POST", "/reviews", body),
+    myReviewedBookings:   () => call("GET", "/reviews/my-reviewed-bookings"),
+
+    // Waitlist
+    joinWaitlist:   (trekId) => call("POST", "/waitlist/" + trekId),
+    leaveWaitlist:  (trekId) => call("DELETE", "/waitlist/" + trekId),
+    myWaitlist:     () => call("GET", "/waitlist/me"),
+    checkWaitlist:  (trekId) => call("GET", "/waitlist/check/" + trekId),
+
+    // Notifications
+    getNotifications: () => call("GET", "/notifications"),
+    markRead:         (id) => call("PATCH", "/notifications/" + id + "/read"),
+    markAllRead:      () => call("PATCH", "/notifications/read-all"),
+    broadcastNotif:   (body) => call("POST", "/notifications/broadcast", body),
   };
 })(window);
