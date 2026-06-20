@@ -40,6 +40,17 @@ window.LoginView = {
                 </button>
               </form>
 
+              <div class="d-flex align-items-center gap-2 my-3">
+                <hr class="flex-grow-1 m-0" />
+                <span class="small text-muted">or</span>
+                <hr class="flex-grow-1 m-0" />
+              </div>
+              <a href="/api/auth/google"
+                 class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-google"></i>
+                Continue with Google
+              </a>
+
               <hr class="my-4" />
               <div class="small text-muted">
                 <div class="fw-semibold text-body mb-2">Try a demo account</div>

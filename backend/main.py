@@ -23,6 +23,7 @@ from .routes.ai_routes import router as ai_router
 from .routes.review_routes import router as review_router
 from .routes.waitlist_routes import router as waitlist_router
 from .routes.notification_routes import router as notification_router
+from .routes.oauth_routes import router as oauth_router
 
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,7 @@ def create_app() -> FastAPI:
     api.include_router(review_router)
     api.include_router(waitlist_router)
     api.include_router(notification_router)
+    api.include_router(oauth_router)
     app.mount(settings.api_prefix, api)
 
     app.add_middleware(

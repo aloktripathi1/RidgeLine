@@ -45,6 +45,17 @@ window.RegisterView = {
                   Create account
                 </button>
               </form>
+
+              <div class="d-flex align-items-center gap-2 my-3">
+                <hr class="flex-grow-1 m-0" />
+                <span class="small text-muted">or</span>
+                <hr class="flex-grow-1 m-0" />
+              </div>
+              <a href="/api/auth/google"
+                 class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-google"></i>
+                Sign up with Google
+              </a>
             </div>
           </div>
           <p class="text-center text-muted small mt-4">

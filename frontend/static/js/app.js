@@ -11,8 +11,9 @@
   const routes = [
     { path: "/",          name: "home",   component: window.HomeView, meta: { layout: true } },
     { path: "/login",     name: "login",  component: window.LoginView, meta: { layout: true, guestOnly: true } },
-    { path: "/register",  name: "register", component: window.RegisterView, meta: { layout: true, guestOnly: true } },
-    { path: "/catalog",   name: "catalog", component: window.CatalogView, meta: { layout: true } },
+    { path: "/register",       name: "register",       component: window.RegisterView,     meta: { layout: true, guestOnly: true } },
+    { path: "/auth/callback",  name: "oauth-callback", component: window.OAuthCallbackView, meta: { layout: true } },
+    { path: "/catalog",        name: "catalog",        component: window.CatalogView,       meta: { layout: true } },
 
     // Trekker
     { path: "/me/bookings", name: "my-bookings", component: window.MyBookingsView, meta: { layout: true, roles: ["trekker"] } },

@@ -257,6 +257,8 @@ RidgeLine/
 | Variable | Default | Description |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | — | Required for AI features |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth client ID (optional — disables Google sign-in if unset) |
+| `GOOGLE_CLIENT_SECRET` | — | Google OAuth client secret |
 | `TMA_SEED_ADMIN_EMAIL` | `admin@ridgeline.app` | Seed admin email |
 | `TMA_SEED_ADMIN_PASSWORD` | `admin123` | Seed admin password |
 | `TMA_SEED_ADMIN_NAME` | `Admin` | Seed admin display name |

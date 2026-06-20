@@ -60,5 +60,8 @@ class Settings:
     email_mode: str = _env("TMA_EMAIL_MODE", "console")  # console | smtp (stub)
     debug: bool = _env_bool("TMA_DEBUG", False)
 
+    google_client_id: str = _env("GOOGLE_CLIENT_ID", "")
+    google_client_secret: str = _env("GOOGLE_CLIENT_SECRET", "")
+
 
 settings = Settings()

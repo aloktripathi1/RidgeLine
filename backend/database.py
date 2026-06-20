@@ -65,8 +65,18 @@ def init_database() -> None:
     from .models.trek import Trek, TrekDifficulty, TrekStatus
     from .models.booking import Booking, BookingStatus
     from .auth import hash_password
+    from sqlalchemy import inspect, text
 
     Base.metadata.create_all(bind=engine)
+
+    # Inline migration: add oauth_provider column to existing databases.
+    inspector = inspect(engine)
+    if "users" in inspector.get_table_names():
+        existing_cols = {col["name"] for col in inspector.get_columns("users")}
+        if "oauth_provider" not in existing_cols:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN oauth_provider VARCHAR(50)"))
+                conn.commit()
 
     with session_scope() as db:
         existing_admin = (

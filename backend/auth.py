@@ -23,6 +23,9 @@ def hash_password(plain_password: str) -> str:
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    # Empty hash means OAuth-only account — password login is not allowed.
+    if not hashed_password:
+        return False
     return pwd_context.verify(plain_password, hashed_password)
 
 
