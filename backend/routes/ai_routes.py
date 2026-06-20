@@ -79,7 +79,7 @@ async def recommend_trek(
     db: Session = Depends(get_db),
 ):
     client = _get_client()
-    treks = trek_service.list_treks(db)
+    treks = trek_service.list_treks(db, None, None, None, None)
     open_treks = [t for t in treks if t.status.value in ("Open", "Approved")]
 
     if not open_treks:
@@ -232,7 +232,7 @@ async def trek_chat(
     db: Session = Depends(get_db),
 ):
     client = _get_client()
-    treks = trek_service.list_treks(db)
+    treks = trek_service.list_treks(db, None, None, None, None)
     open_treks = [t for t in treks if t.status.value in ("Open", "Approved")]
     trek_context = "\n".join(_trek_summary(t) for t in open_treks[:10])
 
